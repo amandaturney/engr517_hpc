@@ -1,0 +1,45 @@
+{
+    "version": 3,
+    "configurePresets": [
+	    {
+            "name": "mpicc",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": {
+                    "type": "STRING",
+                    "value": "mpic++"
+                }
+            }
+        },
+	    {
+            "name": "release",
+	        "inherits": "mpicc",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Release"
+                },
+                "CMAKE_CXX_FLAGS_RELEASE": {
+                    "type": "STRING",
+                    "value": "-O3"
+                }
+            }
+        },
+        {
+            "name": "debug",
+	        "inherits": "mpicc",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Debug"
+                },
+                "CMAKE_CXX_FLAGS_DEBUG": {
+                    "type": "STRING",
+                    "value": "-O0 -g -fsanitize=address -fsanitize=undefined"
+                }
+            }
+        }
+    ]
+}
