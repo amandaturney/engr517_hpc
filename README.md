@@ -1,0 +1,21 @@
+# ENGR E-517 High Performance Computing: Final Project
+This graduate level project emulates Shor's algorithm in an HPC environment utilizing the <a href="https://www.openmp.org/">OpenMP</a> library to manage qubit register states with threads. A single thread manages an initial qubit register state of "0...0" and applies the quantum gates listed in the circuit by updating that state appropriately. However, whenever a Hadamard gate is encountered in the circuit, the 'omp task' pragma is used to spawn a new thread that allows for a branching of possible qubit states. Each thread updates the qubit's state and probability amplitude and then both threads continue processing the remaining quantum gates in the circuit.
+
+At the end of the circuit, the 'task_reduction' pragma is used to sum the probability amplitudes for each possible output state across all the resulting threads. Measurements are performed by randomly sampling the set of resulting states given their probability distributions. This program also executes the classical component of Shor's algorithm that takes the period of the function, found by the quantum algorithm, and computes the factors for N.
+
+## Emulating Shor's Algorithm for N=15
+The final_project folder contains the C++ code for running the program to execute Shor's algorithm for N=15. This work served as a proof of concept design for how one would emulate a quantum algorithm within a high performance computing environment. The program, upon completion, will read out on the command line the factors of N=15, the number of times the quantum algorithm had to run (in the case that it measured a period of 0, which is not informative and prompts another re-run), and the total processing time. The circuit contains 5 Hadamard gates which creates a total of 32 threads ($2^5 = 32$). Thus, running the program with the environment variable `OMP_NUM_THREADS` set to 32 allows for the program to run a parallel capacity more similar to how the quantum algorithm works on quantum hardware where the parallelness comes for free.
+
+
+Example of how to run the compiled program and the output:
+```
+./shors
+>>Performing Shor's Algorithm to factor 15 with 12 threads.
+>>The estimate of the factors of 15 are 3, 5.
+>>Number of tries: 3, using 12 threads, time spent processing: 2741675 ns.
+```
+
+## Dynamic Quantum Circuit for $a^x$ mod $N$
+The circuit to carry out the period estimation for $4^x$ mod $15$ is quite short consisting of only 10 quantum gates. So while the program can be configured such that OpenMP uses 32 threads, it isn't very performant to do so. There is more work in the overhead of managing the threads than there is work in the circuit and thus does not benefit from strong scaling. Furthermore, it would be desirable to develop an application that could dynamically build the quantum circuit for a given $a$ and $N$ of the general function $a^x$ mod $N$ instead of the [shors.cpp](final_project/shors.cpp) implementation which has the circuit for the specific function hardcoded. A larger circuit that can be built dynamically can also benefit more than the toy example for $4^x$ mod $15$ from performance gains through parallelization.
+
+The quantum_ops folder explores this idea by building out a framework to build circuits dynamically. In order to build the algorithm for a generalized $a^x$ mod $N$ function, one can start with its most basic component: a quantum adder. One good choice for the quantum adder is Draper’s Adder, which requires transforming into the Quantum Fourier Transform (QFT) basis, applying controlled phase gates, and then doing the Inverse QFT to get back to the computation basis. Exponential modulation is the application of many adders in a row, so in order to test out a proof of concept on how well this implementation scales, the program repeats the adder many times in a row. The execution of the [quantum_ops.cpp](quantum_ops/quantum_ops.cpp) program requires passing two arguments to add together, `a` and `b`, then it dynamically builds the circuit to perform addition of those those two numbers and repeats the addition X number of times. Performance benefits of strong scaling (increasing number of threads to use) can be easily seen once these larger circuits are run.
